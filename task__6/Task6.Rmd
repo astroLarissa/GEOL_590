@@ -1,9 +1,8 @@
 ---
 title: "Energy Usage and Production Among the 25 Largest Energy Economies"
 output:
-  html_document: default
-  html_notebook: default
   pdf_document: default
+  html_notebook: default
 ---
 
 
@@ -28,7 +27,7 @@ library(dplyr)
 #read_csv allows us to read in the data with column name assignnation. Note the 
 #underscore '_' in this syntax compared with '.' in the base R syntax.
 
-produse <- read_csv('project/produse.csv', col_names = c('country', 'production', 'usage'))
+produse <- read_csv('data/produse.csv', col_names = c('country', 'production', 'usage'))
 
 #We will now preview the data frame 'produse.' As you will be able to see, the 
 #entries now have the proper data structure.
@@ -46,8 +45,7 @@ library(tidyverse)
 
  ggplot(data = produse, aes(x = usage, y = production, label = country)) 	+
   #We will plot usage v. production. Specifying label = country allows us to see 
-  #to want nation the data point corresponds. +
-     ggtitle('Energy Production v. Usage in kWh') +
+  #to want nation the data point corresponds. 
      geom_jitter() 										+
   #Visually organising the data as a scatterplot. 
      		theme(axis.text.x = element_text(
@@ -75,9 +73,8 @@ We seek to resolve this in two ways:
 
 ggplot(data = produse, aes(x = usage, y = production, label = country)) 	+
      geom_jitter()                  +
-      ggtitle('Energy Production v. Usage in kWh') +
-      scale_x_log10()								+   #The addition of this code changes the
-      scale_y_log10()    						+   #scale for each axis. 
+     scale_x_log10()								+   #The addition of this code changes the
+     scale_y_log10()    						+   #scale for each axis. 
      		theme(axis.text.x = element_text(
          						  size=10, angle=45),
         		 axis.text.y = element_text( 
@@ -98,10 +95,9 @@ We see that the relationship of production and usage is close to an identity, wh
 #Our second method of rendering more intelligible the bottom 19 data points is to zoom in. 
 
 p <-ggplot(data = produse[6:25,], aes(x = usage, y = production, label = country)) 	+
-#storing our plot to 'p' will allow us to deploy zoom.   
+#storing our plot to 'p' will allow us to deploy zoom.    
      geom_jitter()                  +
-      ggtitle('Energy Production v. Usage in kWh') +
-    # scale_x_log10()								+   We will revert to linear scaling for now.
+   #  scale_x_log10()								+   We will revert to linear scaling for now.
     # scale_y_log10()    						+ 
      		theme(axis.text.x = element_text(
          						  size=10, angle=45),

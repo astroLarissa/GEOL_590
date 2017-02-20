@@ -1,9 +1,8 @@
 ---
 title: "Energy Usage and Production Among the 25 Largest Energy Economies"
 output:
-
   html_document: default
-  
+  git_document: default
 ---
 
 
