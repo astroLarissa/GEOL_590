@@ -1,0 +1,50 @@
+%Lara "Larissa" G. Weaver
+%15 Feb 2017
+&Lab 6
+
+type machepsA.m
+
+e = 1;						%initialize variable for mach eps
+
+for i = 0:1000;				%for-loop with N at a high value since n unknown
+		if 1 + e > 1;		%test condition
+			olde = e;		%store last value of e before divison 
+			e = e/2;		%keep dividing e by 2 while 1 + e > 1
+		else;
+			n = i - 1;		%store number of times e is divided
+		break;				%to get out of for-loop
+		end;
+end;
+
+fprintf('A. using for-loop: e = %e, n = %d. \n', olde,n);
+%-------------------------------------------------------------------------------------------------------------------
+machepsA
+A. using for-loop: e = 2.220446e-16, n = 52. 
+%===================================================================================================================
+type machepsB.m
+
+ew = 1; 						%initialize variable to store e
+count = 0;						%initialize variable to count division by 2
+
+while 1 + ew > 1;				%while condition
+	oldew = ew;					%store last value for e before division
+	ew = ew/2;
+	count = count + 1;			%increment count
+end;
+
+count = count -1;				%adjust count to last value of oldew
+
+fprintf('B. using while-loop: e = %e, n = %d. \n', oldew,count);
+%-------------------------------------------------------------------------------------------------------------------
+machepsB
+B. using while-loop: e = 2.220446e-16, n = 52. 
+%====================================================================================================================
+
+%1. Did both scripts produce the same value for e ? 
+	yes
+%2. The same power n ?   This is the actual precision, p, of your machine (number of digits in mantissa). 
+	yes: 52
+%3. Does your e match Matlab's eps ? 
+	yes
+%4. Which one agrees with 2^(−p) ?
+	both do
