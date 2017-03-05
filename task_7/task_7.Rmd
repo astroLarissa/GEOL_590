@@ -1,0 +1,199 @@
+---
+title: 'Task 7'
+output: 
+html_documnet: default
+git_document: default
+---
+
+Completed draft: 3 March 17
+First upload: 4 March 17
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(nycflights13)
+```
+#Section I
+
+Using nycflights13::weather, determine whether there are any clear outliers in wind speed (wind_speed) that should be rejected. If so, filter those bad point(s) and proceed.
+
+```{r}
+#plot to visiualize outlier
+nycflights13::weather %>% ggplot(aes(x = origin, y = wind_speed)) + geom_boxplot()
+
+#filter out values we don't want
+nycflights <- nycflights13::weather %>% filter(wind_speed < 250.0) 
+
+#plotting again to see if additional outliers
+nycflights %>% ggplot(aes(x = origin, y = wind_speed)) + geom_boxplot()
+```
+
+Make a table and a plot of median wind speed by direction, for each airport. Optional fun challenge: If you like, this is a rare opportunity to make use of coord_polar().
+
+```{r}
+#create new tibble with origin, wind direction, and median wind speed by direction
+nycwind <- nycflights %>% 
+                    group_by(origin, wind_dir) %>%
+                    filter(wind_speed > 0) %>%
+                    summarise(med_sp = median(wind_speed)) %>%
+                    mutate(med_sp) %>%
+                    select(origin, wind_dir, med_sp)
+
+#point plot
+nycwind %>% ggplot(aes(x = wind_dir, y = med_sp, color = origin)) +
+      geom_point()
+
+#plot using polar coordinates
+nycwind %>% ggplot(aes(x = med_sp, y = wind_dir, color = origin)) +   
+      geom_point() +
+      coord_polar(theta = 'y', start = -pi/2, direction = -1) 
+```
+
+
+What direction has the highest median speed at each airport?
+
+```{r}
+#this tibble displays the direction(s) of the max medium wind speeds by airport
+max_med_sp <- nycwind %>%
+              group_by(origin) %>%
+              filter(med_sp == max(med_sp))
+
+max_med_sp
+```
+
+#Section II
+
+Using nycflights13::flights and nycflights13::airlines, make a table with two columns: airline name (not carrier code) and median distance flown from JFK airport. The table should be arranged in order of decreasing mean flight distance. Hint: use a _join function to join flights and airlines.
+
+```{r}
+#visualize the dfs we're starting with
+nycflights13::flights
+nycflights13::airlines
+
+#combine the dfs matching carrier with name
+airline_dist_jfk <- (nycflights13::flights [,c('carrier', 'distance')] %>%
+                    left_join(nycflights13::airlines, by = 'carrier'))[,-1]
+
+#get med, mean and put in descending order
+airline_dist_jfk <- airline_dist_jfk %>%
+                    group_by(name) %>%
+                    summarise(med_dist = median(distance), mean_dist = mean(distance)) %>%
+                    arrange(desc(mean_dist))
+
+airline_dist_jfk
+```
+
+Make a wide-format data frame that displays the number of flights that leave Newark ("EWR") airport each month, from each airline
+
+
+```{r}
+Newark_flights <- nycflights13::flights %>%
+                  left_join(nycflights13::airlines, by = 'carrier') %>%    #get carrier name
+                  filter(origin == 'EWR') %>%
+                  group_by(month, name) %>%
+                  summarise(num_flight = length(flight)) %>%    #col length of flight is number of flights
+                  spread (month, num_flight)                               #orient horizontally
+
+Newark_flights
+```
+
+#Section III
+
+Using the babynames dataset, identify the ten most common male and female names in 2014. Make a plot of their frequency (prop) since 1880.
+
+```{r}
+babynames::babynames
+#already in descending order of popularity by year
+
+#new tibble with names from 2014, with top 10 rows for each sex
+top_names_14 <- babynames::babynames %>%
+                filter(year == 2014) %>%
+                group_by(sex) %>%
+                top_n(10,n)
+
+#new tiddle with values of names top 10 names for M and F and filter for only those rows in babynames
+top_names_freq <- babynames::babynames %>%
+                filter(paste0(sex, name) %in% paste0(top_names_14$sex, top_names_14$name))
+
+#plot year,prop, color to distinguish name
+top_names_freq %>% ggplot(aes(x = year, y = prop, color = name)) +
+                geom_line() +
+                facet_grid(.~sex)
+
+```
+
+Make a single table of the 26th through 29th most common girls names in the year 1896, 1942, and 2016
+
+```{r}
+#there's a short way to do this, but this is mine so far
+
+#tibble of 1896 F names in descending order of popularity
+female_1896 <- babynames::babynames %>%
+                filter(sex == 'F') %>%
+                filter(year == 1896)
+#select rows 26-29 correspond to 26th-29th most popular names
+female_1896 <- female_1896[26:29,]          #table of 26-29th popular names 1896
+
+female_1942 <- babynames::babynames %>%
+                filter(sex == 'F') %>%
+                filter(year == 1942)
+
+female_1942 <- female_1942[26:29,]          #table of 26-29th popular names 1942
+
+female_2014 <- babynames::babynames %>%
+                filter(sex == 'F') %>%
+                filter(year == 2014)
+
+female_2014 <- female_2014[26:29,]          #table of 26-29th popular names 2014
+
+#join the 3 tibbles two at a time
+female_26_29 <- full_join(female_1896, female_1942)
+                
+female_26_29 <- full_join(female_26_29, female_2014)  
+
+female_26_29
+```
+
+Section IV
+
+
+Write task that involves some of the functions on the Data Wrangling Cheat Sheet and execute it. You may either use your own data or data packages (e.g., the ones listed here).
+
+Use the timeseries sunspot.year to visualize and locate peak sunspot activity years.
+
+```{r}
+library(datasets)
+library(pastecs)
+datasets::sunspot.year
+
+#build tibble from the ts sunspot.years
+sunspot <- data_frame(year = 1700:1988, spots = as_vector(sunspot.year))
+tbl_df(sunspot)
+
+#plot time, activity
+sunspot %>% ggplot(aes(x = year, y = spots)) +
+                    geom_line()
+
+#use pastecs library function turnpoints to find local maxima, minima
+e <- turnpoints(sunspot.year)
+
+#create dataframe of peak and year
+peaks <- data_frame(peak = as_vector(e$peaks), s = as_vector(e$points))
+
+#the turnpoints function omitted a point when there were 2 consecutive 0's at 
+#1711 and 1712. Easier to omit a row in sunspots than add one in peaks
+sunspot <- sunspot %>% filter(year != 1711) 
+
+#combine data into dateframe
+cycles <- bind_cols(sunspot, peaks)
+
+#convert to tibble
+tbl_df(cycles)
+
+maxima <- cycles %>% filter(peak == TRUE) %>%
+                    select(year, spots)
+
+#cyclic maximum sunpot activity years
+maxima
+```
+
