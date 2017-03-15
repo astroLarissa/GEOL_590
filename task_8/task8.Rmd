@@ -1,0 +1,120 @@
+---
+title: "R Notebook"
+output: 
+html_documnet: default
+git_document: default
+---
+
+#Reading in the Data
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(lazyeval)
+
+#read in Washington Post data and convert into df with fatalities by state, with 
+#ethnicity as rows
+
+fatal_shootings <- read_csv('fatal_shootings.csv', col_names = TRUE)
+
+state_shootings <- count(fatal_shootings, race, state)
+
+shootings <- spread(state_shootings, key = state, value = n)
+
+##This dataframe is FULL of NA's the better to test our sum function
+```
+
+
+#Functions and error handling
+
+Write a function that fulfills the following criteria:
+
+1.  tidyverse compatible (i.e., the first argument must be a data frame)
+
+2.  adds two arbitrary columns of and put them in a new column of that data frame, with     the name of the new column specified by the user
+
+3.  warning if any invalid arguments are provided. Invalid arguments might include:
+        The first argument is not a data frame
+        Less than two valid columns are specified to add (e.g., one or both of the                  column names isn't in the supplied data frame)
+        The columns specified are not numeric, and therefore can't be added - use       
+            tryCatch() for this
+    If the columns to add aren't valid but the new column name is, the function should      create a column of NA values
+
+```{r}
+library(dplyr)
+library(lazyeval)
+
+df.sum <- function(df.in, col.1, col.2, name)  {
+
+  if(is.data.frame(df.in) != TRUE){               #warning if first arg not df
+    warning('df.in is not a dataframe')}
+
+  if(is.numeric(lazyeval::lazy_eval(substitute(col.1), df.in)) != TRUE){                
+    warning('col.1 is not a numeric vector')}     
+
+  if(is.numeric(lazyeval::lazy_eval(substitute(col.2), df.in)) != TRUE){
+    warning('col.2 is not a numeric vector')}     #warning if col not numeric 
+
+  dots <- setNames(list(lazyeval::interp(~sum(x, y, na.rm = TRUE),
+                                         x = substitute(col.1), y = substitute(col.2))),
+                   name)
+
+  df.out <- rowwise(df.in) %>%
+    mutate_(.dots = dots)
+
+  df.out 
+}
+
+
+df.sum(shootings, RI, CT, 'northeast')
+
+```
+
+
+#Loop and performance metric tasks
+
+Write a function that uses a for loop to calculate the sum of the elements of a vector, which is passed as an argument (i.e., it should do the same thing that sum() does with vectors). 
+
+your_fun(1:10^4) should return 50005000.
+
+```{r}
+a <- (1:10^4)
+
+vec_sum <- function(a){
+
+n <- as.numeric(length(a))
+
+vec.sum = 0
+
+for (i in 1:n) {
+  vec.sum <- vec.sum + a[i]
+               }
+
+print(vec.sum)
+
+}
+```
+
+
+Use the microbenchmark::microbenchmark function to compare the performace of your function to that of sum in adding up the elements of the vector 1:10^4.
+    
+```{r}
+library(microbenchmark)
+
+test.vec <- 1:10^4
+microbenchmark(
+    vec_sum(test.vec),
+    sum(test.vec)
+    )
+```
+
+Is there a difference? Why?
+
+Obviously, the function I wrote using a for-loop takes longer to execture than the sum function. Without knowing too much about what is going on when we deploy R's sum() function
+under the hood, as it were, the user-defined function vec_sum() uses multiple functions:
+as.numeric()
+length()
+and then, of, course the for-loop. 
+
+Presumably, R's sum() function is going to be more efficent than this. 
+
